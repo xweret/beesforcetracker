@@ -2,12 +2,16 @@ import streamlit as st
 import pandas as pd
 import datetime
 
-st.set_page_config(page_title="Bees Porce Tracker", layout="centered")
+st.set_page_config(page_title="Bees Force - Tracker", layout="centered")
 
-st.title("🧬 Tracker de Valor - Bees Porce")
-st.subheader("Cargá y seguí el progreso de tus SKUs")
+# Título principal motivacional
+st.markdown("""
+    <h1 style='text-align: center; color: #f9c80e;'>🐝 BEES FORCE · CREACIÓN DE VALOR 🚀</h1>
+""", unsafe_allow_html=True)
 
-# Supervisores y vendedores
+st.subheader("Cargá y seguí el progreso de tus SKUs en puntos de venta")
+
+# Supervisores y sus promotores
 supervisores = {
     "FEDERICO SUAREZ": [
         "ALEJANDRA CAMARA", "MARCELO RIOS", "LUCIANO PEREZ", "BRAIAN ABREGU",
@@ -19,6 +23,7 @@ supervisores = {
     ]
 }
 
+# Cargar base de datos local o crear una nueva
 @st.cache_data
 def load_data():
     try:
@@ -28,10 +33,15 @@ def load_data():
 
 data = load_data()
 
-with st.form("formulario"):
-    st.markdown("### 📝 Cargar nuevo SKU")
-    supervisor = st.selectbox("Supervisor", list(supervisores.keys()))
-    promotor = st.selectbox("Promotor", supervisores[supervisor])
+# Formulario de carga
+with st.form("formulario_sku"):
+    st.markdown("### 📝 Registrar nuevo SKU")
+    col1, col2 = st.columns(2)
+    with col1:
+        supervisor = st.selectbox("Supervisor", list(supervisores.keys()), key="supervisor")
+    with col2:
+        promotor = st.selectbox("Promotor", supervisores[supervisor], key="promotor")
+    
     sku = st.text_input("SKU")
     punto = st.text_input("Punto de Venta")
     submitted = st.form_submit_button("Registrar")
@@ -46,25 +56,26 @@ with st.form("formulario"):
         }
         data = pd.concat([data, pd.DataFrame([nueva_fila])], ignore_index=True)
         data.to_csv("skus_data.csv", index=False)
-        st.success("✅ SKU registrado correctamente!")
+        st.success(f"🎉 ¡SKU registrado exitosamente para {promotor}!")
+        st.balloons()
 
-# Visualización del progreso
+# Visualización de progreso
 st.markdown("### 📈 Progreso por Supervisor")
 
 if not data.empty:
-    for sup in supervisores.keys():
+    for sup, lista_promos in supervisores.items():
         subset = data[data["Supervisor"] == sup]
         total = len(subset)
         st.markdown(f"#### 🧑‍💼 {sup} — {total} SKUs")
         st.progress(min(total / 50, 1.0))
 
-        for prom in supervisores[sup]:
+        for prom in lista_promos:
             count = len(subset[subset["Promotor"] == prom])
             st.text(f"{prom} — {count} SKUs")
             st.progress(min(count / 20, 1.0))
 else:
-    st.info("No hay datos aún. Cargá tu primer SKU arriba.")
+    st.info("No hay datos cargados todavía.")
 
-# Tabla opcional
-with st.expander("📄 Ver registros"):
+# Ver tabla de datos completa
+with st.expander("📄 Ver registros completos"):
     st.dataframe(data)
